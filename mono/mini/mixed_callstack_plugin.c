@@ -8,6 +8,7 @@ static gboolean enabled;
 static mono_mutex_t mutex;
 static HANDLE fileHandle;
 int pmipFileNum;
+static GPtrArray* root_domain_frames;
 
 #define mixed_callstack_plugin_lock() mono_os_mutex_lock (&mutex)
 #define mixed_callstack_plugin_unlock() mono_os_mutex_unlock (&mutex)
@@ -49,6 +50,8 @@ mixed_callstack_plugin_init (const char *options)
 {
 	pmipFileNum = 0;
 
+	root_domain_frames = g_ptr_array_new();
+
 	mono_os_mutex_init_recursive(&mutex);
 
 	MonoProfilerHandle prof = mono_profiler_create(NULL);
@@ -60,10 +63,18 @@ mixed_callstack_plugin_init (const char *options)
 void
 mixed_callstack_plugin_on_domain_unload_end()
 {
-	if(!enabled)
+	if (!enabled)
 		return;
 
 	create_next_pmip_file();
+	long bytesWritten = 0;
+	// ensure root domain is represented
+	mixed_callstack_plugin_lock();
+	for (int i = 0; i < root_domain_frames->len; i++)
+	{
+		WriteFile(fileHandle, root_domain_frames->pdata[i], strlen(root_domain_frames->pdata[i]), &bytesWritten, NULL);
+	}
+	mixed_callstack_plugin_unlock();
 }
 
 void
@@ -86,6 +97,11 @@ mixed_callstack_plugin_save_method_info (MonoCompile *cfg)
 
 	mixed_callstack_plugin_lock ();
 	WriteFile(fileHandle, frame, bytes, &bytesWritten, NULL);
+	if (cfg->domain == mono_get_root_domain())
+	{
+		char* tFrame = g_strdup(frame);
+		g_ptr_array_add(root_domain_frames, tFrame);
+	}
 	mixed_callstack_plugin_unlock ();
 
 	g_free(method_name);

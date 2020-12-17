@@ -528,6 +528,7 @@ TESTS_CS_SRC=		\
 	bug-58782-plain-throw.cs \
 	bug-58782-capture-and-throw.cs \
 	recursive-struct-arrays.cs \
+	struct-static.cs \
 	bug-59281.cs	\
 	init_array_with_lazy_type.cs \
 	weak-fields.cs \
@@ -765,6 +766,7 @@ if FULL_AOT_TESTS
 # Tests which rely on TypeLoadExceptions
 # In full-aot mode, these cause the relevant methods to be not AOTed.
 PROFILE_DISABLED_TESTS += \
+	struct-static.exe \
 	typeload-unaligned.exe \
 	field-access.exe \
 	invalid_generic_instantiation.exe \
@@ -782,6 +784,7 @@ PROFILE_DISABLED_TESTS += \
 	resolve_method_bug.2.exe \
 	resolve_field_bug.2.exe \
 	resolve_type_bug.2.exe \
+	struct-static.exe \
 	bug-81691.exe \
 	bug-327438.2.exe
 
